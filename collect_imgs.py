@@ -32,17 +32,26 @@ for letter in letters:
         if not ret:
             continue
 
-        cv2.putText(frame, f'Letter {letter} (Class {class_index}) - Press Q to start',
+        cv2.putText(frame, f'Letter {letter} (Class {class_index}) - Press Q to start or S to skip',
                     (30, 50),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8,
+                    0.7,
                     (0, 255, 0),
                     2)
 
         cv2.imshow('frame', frame)
 
-        if cv2.waitKey(25) & 0xFF == ord('q'):
+        key = cv2.waitKey(25) & 0xFF
+        if key == ord('q'):
+            should_skip = False
             break
+        elif key == ord('s'):
+            should_skip = True
+            break
+
+    if should_skip:
+        print(f"Skipping letter {letter}")
+        continue
 
     # 1 second pause
     ret, frame = cap.read()
@@ -67,18 +76,24 @@ for letter in letters:
         cv2.imshow('frame', frame)
         cv2.waitKey(1000)
 
+    # Find existing images to decide starting counter safely
+    existing_files = os.listdir(class_path)
+    existing_images = [int(f.split('.')[0]) for f in existing_files if f.endswith('.jpg') and f.split('.')[0].isdigit()]
+    start_counter = max(existing_images) + 1 if existing_images else 0
+
     # Capture images
-    counter = 0
-    while counter < dataset_size:
+    counter = start_counter
+    while counter < start_counter + dataset_size:
         ret, frame = cap.read()
 
         if not ret:
             continue
 
-        cv2.putText(frame, f'Capturing {letter}: {counter}/{dataset_size}',
-                    (50, 50),
+        # Shows capturing status. e.g.: 1/100 (Total Saved: 101)
+        cv2.putText(frame, f'Capturing {letter}: {(counter - start_counter) + 1}/{dataset_size} (Total Saved: {counter + 1})',
+                    (30, 50),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
+                    0.8,
                     (255, 0, 0),
                     2)
 
